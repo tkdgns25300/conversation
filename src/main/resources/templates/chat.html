@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>AI Chat Conversation</title>
+    <meta charset="UTF-8">
+    <style>
+
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>AI Chat Conversation</h1>
+        </div>
+        <div class="chat-window" id="chat-window">
+            <div id="messages-container">
+                <div th:if="${messages != null}">
+                    <div th:each="message : ${messages}">
+                        <div th:class="'message ' + (${message.sender} == 'User' ? 'user' : message.sender)">
+                            <div class="bubble">
+                                <div class="sender" th:text="${message.sender} + ':'"></div>
+                                <div class="content" th:text="${message.content}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="typing-indicator" class="typing-indicator" style="display:none;">
+                <div></div><div></div><div></div>
+            </div>
+        </div>
+        <form action="#" class="topic-form" id="topic-form">
+            <label for="topic">Insert Topic</label>
+            <input type="text" id="topic" name="topic" required>
+            <button type="submit">Start Conversation</button>
+        </form>
+    </div>
+
+    <script th:inline="javascript">
+        let isChatting = true;
+        let lastMessageCount = 0;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('topic-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const topic = document.getElementById('topic').value;
+                isChatting = true;
+                lastMessageCount = 0;
+
+                // submit topic to server
+                fetch('/chat/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'topic=' + encodeURIComponent(topic),
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        this.style.display = 'none';
+                        fetchNextMessage();
+                    })
+                    .catch(error => {
+                        console.log(error)
+                    });
+            });
+        });
+
+        function fetchNextMessage() {
+            console.log('fetchNextMessage is called');
+            if (!isChatting) return;
+
+            showTypingIndicator();
+
+            fetch('/chat/next?timestampe=' + new Date().getTime())
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Data Length:', data.length, 'lastMessageCount:', lastMessageCount);
+                    if (data && data.length > lastMessageCount) {
+                        updateChatWindow(data);
+                        lastMessageCount = data.length;
+                    }
+                    hideTypingIndicator();
+
+                    if (isChatting) {
+                        setTimeout(fetchNextMessage, 2000);
+                    }
+                })
+                .catch(error => {
+                   hideTypingIndicator();
+
+                   if (isChatting) {
+                       setTimeout(fetchNextMessage, 2000);
+                   }
+                });
+        }
+
+        function updateChatWindow(messages) {
+            const messagesContainer = document.getElementById('messages-container');
+            messagesContainer.innerHTML = '';
+            
+            messages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message' + (message.sender === 'User' ? ' user' : message.sender);
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'bubble';
+                const senderDiv = document.createElement('div');
+                senderDiv.className = 'sender';
+                senderDiv.textContent = message.sender + ':';
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'content';
+                contentDiv.textContent = message.content;
+                bubbleDiv.appendChild(senderDiv);
+                bubbleDiv.appendChild(contentDiv);
+                messageDiv.appendChild(bubbleDiv);
+                messagesContainer.appendChild(messageDiv);
+            });
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.style.display = 'block';
+            } else {
+                console.error('Typing indicator not found');
+            }
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.style.display = 'none';
+            } else {
+                console.error('Typing indicator not found');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -2,14 +2,18 @@ package sanghun.project.conversation;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import sanghun.project.conversation.model.Message;
 import sanghun.project.conversation.service.AIChatService;
 
 import java.util.List;
 
-@RestController
+@Controller
 public class AIChatController {
     private final AIChatService aiChatService;
 
