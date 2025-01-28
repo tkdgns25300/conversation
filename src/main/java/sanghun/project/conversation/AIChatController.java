@@ -1,32 +1,44 @@
 package sanghun.project.conversation;
 
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import sanghun.project.conversation.model.Message;
+import sanghun.project.conversation.service.AIChatService;
 
-import java.util.Map;
+import java.util.List;
 
 @RestController
 public class AIChatController {
-    private final OpenAiChatModel openAiChatModel;
-    private final VertexAiGeminiChatModel vertexAiGeminiChatModel;
+    private final AIChatService aiChatService;
 
     @Autowired
-    public AIChatController(OpenAiChatModel openAiChatModel, VertexAiGeminiChatModel vertexAiGeminiChatModel) {
-        this.openAiChatModel = openAiChatModel;
-        this.vertexAiGeminiChatModel = vertexAiGeminiChatModel;
+    public AIChatController(AIChatService aiChatService) {
+        this.aiChatService = aiChatService;
     }
 
-    @GetMapping("/ai/generate/openai")
-    public Map<String,String> generateOpen(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
-        return Map.of("generation", this.openAiChatModel.call(message));
+    // chatting page rendering
+    @GetMapping("/chat")
+    public String chat (Model model) {
+        model.addAttribute("messages", aiChatService.getChatHistory());
+        return "chat";
     }
 
-    @GetMapping("/ai/generate/geminiai")
-    public Map generateGemini(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
-        return Map.of("generation", this.vertexAiGeminiChatModel.call(message));
+    // set subject and generate first message
+    @PostMapping("/chat/start")
+    @ResponseBody
+    public String startChat(@RequestParam("topic") String topic) {
+        aiChatService.resetChat();
+        aiChatService.addUserMessage(topic);
+        return "Chat started";
+    }
+
+    // get next ai's response
+    @GetMapping("/chat/next")
+    public ResponseEntity<List<Message>> getNextMessage() {
+        aiChatService.generateNextMessageSync();
+        List<Message> messages = aiChatService.getChatHistory();
+        return ResponseEntity.ok(messages);
     }
 }
