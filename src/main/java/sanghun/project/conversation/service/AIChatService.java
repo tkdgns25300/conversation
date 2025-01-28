@@ -82,7 +82,7 @@ public class AIChatService {
         String response = "";
 
         try {
-            String prompt = "tell me a joke";
+            String prompt = "Refer to the following conversation and respond in 5 sentences or fewer. Avoid repeating words that were previously mentioned. Respond as if you were participating in the discussion:/n" + conversation;
             switch (currentModel) {
                 case "OpenAI":
                     response = openAIChatModel.call(prompt);
