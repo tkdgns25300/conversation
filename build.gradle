@@ -15,10 +15,15 @@ java {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation platform("org.springframework.ai:spring-ai-bom:1.0.0-SNAPSHOT")
+	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
+	implementation 'org.springframework.ai:spring-ai-vertex-ai-gemini-spring-boot-starter'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
